@@ -2,22 +2,15 @@ import math
 import time
 from machine import I2C,Pin
 
-
-# pylint: disable=bad-whitespace
 _SGP30_DEFAULT_I2C_ADDR  = 0x58
 _SGP30_FEATURESET        = 0x0020
 
 _SGP30_CRC8_POLYNOMIAL   = 0x31
 _SGP30_CRC8_INIT         = 0xFF
 _SGP30_WORD_LEN          = 2
-# pylint: enable=bad-whitespace
+
 
 class SGP30():
-    """
-    A driver for the SGP30 gas sensor.
-    :param i2c: The `I2C` object to use. This is the only required parameter.
-    :param int address: (optional) The I2C address of the device.
-    """
 
     def __init__(self, i2c, address=_SGP30_DEFAULT_I2C_ADDR):
         """Initialize the sensor, get the serial # and verify that we found a proper SGP30"""
@@ -25,7 +18,7 @@ class SGP30():
         self._addr = address
 
         # get unique serial, its 48 bits so we store in an array
-        self.serial = self._i2c_read_words_from_cmd([0x36, 0x82], 0.01, 3)
+        self.serial = self._i2c_read_words_from_cmd([0x36, 0x82], 0.01, 3) #enable SGP30 by writing to control register
         # get featuerset
         featureset = self._i2c_read_words_from_cmd([0x20, 0x2f], 0.01, 1)
         if featureset[0] != _SGP30_FEATURESET:
@@ -35,7 +28,7 @@ class SGP30():
 
     
     def tvoc(self):
-        """Total Volatile Organic Compound in parts per billion."""
+        """Total Volatile Organic Compound in parts per billion"""
         return self.iaq_measure()[1]
 
 
@@ -95,7 +88,7 @@ class SGP30():
 
     def set_iaq_rel_humidity(self, rh, temp):
         """Set the relative humidity in % for eCO2 and TVOC compensation algorithm"""
-        # Formula from "Generic SGP Driver Integration for Software I2C"
+        # Formula from "Generic SGP Driver Integration for I2C"
         gramsPM3 = rh/100.0 * 6.112 * math.exp(17.62*temp/(243.12+temp))
         gramsPM3 *= 216.7 / (273.15 + temp)
 
@@ -106,7 +99,7 @@ class SGP30():
     def _run_profile(self, profile):
         """Run an SGP 'profile' which is a named command set"""
         name, command, signals, delay = profile
-        # pylint: enable=unused-variable
+     
 
         #print("\trunning profile: %s, command %s, %d, delay %0.02f" %
         #   (name, ["0x%02x" % i for i in command], signals, delay))
@@ -146,9 +139,9 @@ class SGP30():
                     crc <<= 1
         return crc & 0xFF
     
-i2c = I2C("I2C_0")
+i2c = I2C("I2C_0") #intitialise I2C instance
 data=SGP30(i2c)
-while True:
+while True: 
     co2eq, tvoc = data.iaq_measure()
     print("CO2eq = %d ppm \t TVOC = %d ppb" % (co2eq, tvoc))
         
